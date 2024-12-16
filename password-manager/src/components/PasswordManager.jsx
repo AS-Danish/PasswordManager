@@ -14,7 +14,7 @@ const DashboardNavbar = () => {
       console.log("No Session is there")
     }
     const id = session.user.id;
-    const response = await axios.post('http://localhost:5000/api/clerkUsers', {
+    const response = await axios.post('https://passwordmanager-mtph.onrender.com/api/clerkUsers', {
       userId: id
     });
   }
