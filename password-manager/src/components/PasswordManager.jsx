@@ -1,27 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useUser, UserButton } from '@clerk/clerk-react'
-import axios from 'axios'
-import { useSession } from '@clerk/clerk-react'
 
 // Dashboard Navbar Component
 const DashboardNavbar = () => {
-
-  const { session } = useSession();
-
-  const fetchUserId = async () => {
-    if (!session) {
-      console.log("No Session is there")
-    }
-    const id = session.user.id;
-    const response = await axios.post('https://passwordmanager-mtph.onrender.com/api/clerkUsers', {
-      userId: id
-    });
-  }
-
-  useEffect(() => {
-    fetchUserId();
-  }, []);
 
   return (
     <nav className="bg-white shadow-md">
