@@ -1,23 +1,24 @@
 import User from '../models/User.model.js'
 import { Webhook } from 'svix';
+import bodyParser from 'body-parser';
 
-// Handle incoming webhook from Svix
+// Handle incoming webhook from Clerk
 async function handleWebhook(req, res) {
-  const SIGNING_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+  const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
   if (!SIGNING_SECRET) {
     return res.status(400).json({
       success: false,
-      message: 'Error: Please add SIGNING_SECRET from Clerk Dashboard to .env',
+      message: 'Error: Please add SIGNING_SECRET to .env',
     });
   }
 
-  // Create Svix Webhook instance with your secret
+  // Create Svix Webhook instance with Clerk's secret
   const wh = new Webhook(SIGNING_SECRET);
 
-  // Get headers and body
+  // Get headers and raw body
   const headers = req.headers;
-  const payload = req.body;
+  const payload = req.body.toString(); // Convert buffer to string
 
   // Get Svix headers for verification
   const svix_id = headers['svix-id'];
@@ -49,14 +50,13 @@ async function handleWebhook(req, res) {
     });
   }
 
-  // Handle the event based on its type
+  // Process event based on type
   const { id } = evt.data;
   const eventType = evt.type;
 
   try {
     switch (eventType) {
       case 'user.created': {
-        // Handle user created event
         const newUser = new User({
           clerkId: id,
           email: evt.data.email_addresses[0]?.email_address || '',
@@ -72,7 +72,6 @@ async function handleWebhook(req, res) {
       }
 
       case 'user.updated': {
-        // Handle user updated event
         await User.findOneAndUpdate(
           { clerkId: id },
           {
@@ -90,7 +89,6 @@ async function handleWebhook(req, res) {
       }
 
       case 'user.deleted': {
-        // Handle user deleted event
         await User.deleteOne({ clerkId: id });
         console.log(`User deleted: ${id}`);
         break;

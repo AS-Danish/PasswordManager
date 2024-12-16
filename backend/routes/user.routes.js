@@ -4,8 +4,10 @@ import bodyParser from "body-parser";
 
 const router = express.Router();
 
-// Webhook route
-router.use(bodyParser.raw({type: 'application/json'}));
-router.post('/clerk', handleWebhook);
+// Middleware to parse the raw body content for webhooks
+router.use(bodyParser.raw({ type: 'application/json' }));
+
+// Route to handle webhooks
+router.post('/webhooks', handleWebhook);
 
 export default router;
