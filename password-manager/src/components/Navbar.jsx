@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useAuth, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react'
 
 const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
   const [isScrolled, setIsScrolled] = useState(false)
+  const { isSignedIn } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,21 +57,42 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-4 py-2 text-indigo-600 hover:text-indigo-900 transition-colors relative group"
-            >
-              Login
-              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300"></span>
-            </motion.button>
-            <motion.button 
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-xl"
-            >
-              Sign Up
-            </motion.button>
+            {isSignedIn ? (
+              <>
+                <motion.a
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  href="/dashboard"
+                  className="px-4 py-2 text-indigo-600 hover:text-indigo-900 transition-colors relative group"
+                >
+                  Dashboard
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300"></span>
+                </motion.a>
+                <UserButton afterSignOutUrl="/" />
+              </>
+            ) : (
+              <>
+                <SignInButton mode="modal">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-4 py-2 text-indigo-600 hover:text-indigo-900 transition-colors relative group"
+                  >
+                    Login
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-indigo-600 group-hover:w-full transition-all duration-300"></span>
+                  </motion.button>
+                </SignInButton>
+                <SignUpButton mode="modal">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-6 py-2.5 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-md hover:shadow-xl"
+                  >
+                    Sign Up
+                  </motion.button>
+                </SignUpButton>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -146,22 +169,43 @@ const Navbar = ({ isMenuOpen, setIsMenuOpen }) => {
             </div>
             <div className="pt-4 pb-3 border-t border-gray-200">
               <div className="grid grid-cols-2 gap-4 px-4">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full px-4 py-2 text-center text-indigo-600 hover:text-indigo-900 border border-indigo-600 rounded-lg transition-colors"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Login
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full px-4 py-2 text-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Sign Up
-                </motion.button>
+                {isSignedIn ? (
+                  <>
+                    <motion.a
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      href="/dashboard"
+                      className="w-full px-4 py-2 text-center text-indigo-600 hover:text-indigo-900 border border-indigo-600 rounded-lg transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Dashboard
+                    </motion.a>
+                    <UserButton afterSignOutUrl="/" />
+                  </>
+                ) : (
+                  <>
+                    <SignInButton mode="modal">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full px-4 py-2 text-center text-indigo-600 hover:text-indigo-900 border border-indigo-600 rounded-lg transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Login
+                      </motion.button>
+                    </SignInButton>
+                    <SignUpButton mode="modal">
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full px-4 py-2 text-center rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Sign Up
+                      </motion.button>
+                    </SignUpButton>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
