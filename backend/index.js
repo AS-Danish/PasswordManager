@@ -2,7 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
-import router from './routes/user.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 dotenv.config();
 
@@ -10,7 +10,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use('/api', router);
+// Use user routes
+app.use('/webhook', userRoutes);
 
 
 // Middleware to serve correct MIME types

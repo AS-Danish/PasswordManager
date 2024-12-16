@@ -1,49 +1,70 @@
-import { clerkClient } from "@clerk/express";
-import User from "../models/User.model.js";
+import User from '../models/User.model.js'
+import crypto from 'crypto';
 
-export const getUsers = async (req, res) => {
-    const userId = req.body.userId;
-    try {
-        // Fetch user data from Clerk
-        const userData = await clerkClient.users.getUser(userId);
+// Your Clerk Webhook Secret
+const CLERK_WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
-        // Extract the necessary data from Clerk response
-        const { id, emailAddresses, username, profileImageUrl, firstName, lastName } = userData;
+// Webhook handler
+const handleWebhook = async (req, res) => {
+  const payload = JSON.stringify(req.body); // Raw payload
+  const signature = req.headers['clerk-signature']; // Signature from Clerk
 
-        // Provide default values if data is missing
-        const email = emailAddresses[0]?.emailAddress || '';
-        const userUsername = username || '';
-        const profilePic = profileImageUrl || '';  // Default empty string
-        const userFirstName = firstName || '';  // Default empty string
-        const userLastName = lastName || '';  // Default empty string
+  // Verify the payload
+  const hmac = crypto.createHmac('sha256', CLERK_WEBHOOK_SECRET).update(payload).digest('hex');
 
-        // Check if the user already exists in the database
-        let user = await User.findOne({ clerkId: id });
+  if (hmac !== signature) {
+    return res.status(401).send('Invalid signature');
+  }
 
-        if (!user) {
-            // If the user doesn't exist, create a new user document
-            user = new User({
-                clerkId: id,
-                email,
-                username: userUsername,
-                profilePic,
-                firstName: userFirstName,
-                lastName: userLastName
-            });
-        
+  // Process the webhook event
+  const event = req.body;
 
-            // Save the new user to the database
-            await user.save();
-        }
+  try {
+    switch (event.type) {
+      case 'user.created': {
+        const newUser = new User({
+          clerkId: event.data.id,
+          email: event.data.email_addresses[0]?.email_address || '',
+          username: event.data.username || '',
+          firstName: event.data.first_name || '',
+          lastName: event.data.last_name || '',
+          profileAvatar: event.data.profile_image_url || '',
+          createdAt: new Date(event.data.created_at || Date.now()),
+        });
+        await newUser.save();
+        break;
+      }
 
-        else{
-            console.log("User Already Exits");
-        }
+      case 'user.updated': {
+        await User.findOneAndUpdate(
+          { clerkId: event.data.id },
+          {
+            email: event.data.email_addresses[0]?.email_address || '',
+            username: event.data.username || '',
+            firstName: event.data.first_name || '',
+            lastName: event.data.last_name || '',
+            profileAvatar: event.data.profile_image_url || '',
+            updatedAt: new Date(event.data.updated_at || Date.now()),
+          },
+          { new: true }
+        );
+        break;
+      }
 
-        // Respond with the user data
-        res.status(200).json(user);
-    } catch (error) {
-        console.error("Error fetching or saving user:", error);
-        res.status(500).json({ error: 'Failed to fetch or save user' });
+      case 'user.deleted': {
+        await User.deleteOne({ clerkId: event.data.id });
+        break;
+      }
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
     }
+
+    res.status(200).send('Webhook processed');
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).send('Internal Server Error');
+  }
 };
+
+module.exports = { handleWebhook };

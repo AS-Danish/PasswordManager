@@ -1,8 +1,9 @@
 import express from "express";
-import { getUsers } from "../controller/user.controller.js";
+import { handleWebhook } from '../controller/user.controller.js'
 
 const router = express.Router();
 
-router.post('/clerkUsers', getUsers)
+// Webhook route
+router.post('/clerk', handleWebhook);
 
-export default router;
+module.exports = router;
