@@ -13,9 +13,12 @@ app.use(express.json());
 app.use('/api', router);
 
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something went wrong!');
+// Middleware to serve correct MIME types
+app.use((req, res, next) => {
+  if (req.path.endsWith('.js')) {
+    res.setHeader('Content-Type', 'text/javascript');
+  }
+  next();
 });
 
 
