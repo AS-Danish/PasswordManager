@@ -2,9 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
-import bodyParser from 'body-parser';
 import { Webhook } from 'svix';
-import { User } from './models/User.js';
+import { User } from './models/User.model.js';
 
 dotenv.config();
 
