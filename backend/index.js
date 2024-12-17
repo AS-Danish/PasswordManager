@@ -12,74 +12,71 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Middleware to parse raw body as needed by svix for signature verification
-app.use(
+// Webhook endpoint with raw body parsing for Svix
+app.post(
   '/webhook/clerk',
-  bodyParser.raw({ type: 'application/json' }) // Ensure raw body is used for webhook verification
+  bodyParser.raw({ type: 'application/json' }), // Ensure raw body for webhook verification
+  async (req, res) => {
+    const SIGNING_SECRET = process.env.SIGNING_SECRET;
+
+    if (!SIGNING_SECRET) {
+      console.error('Error: SIGNING_SECRET not found in environment variables.');
+      return res.status(500).json({
+        success: false,
+        message: 'Server configuration error: SIGNING_SECRET is missing.',
+      });
+    }
+
+    const wh = new Webhook(SIGNING_SECRET);
+
+    // Get Svix headers for verification
+    const svixHeaders = {
+      'svix-id': req.headers['svix-id'],
+      'svix-timestamp': req.headers['svix-timestamp'],
+      'svix-signature': req.headers['svix-signature'],
+    };
+
+    // Check if necessary headers are present
+    if (!svixHeaders['svix-id'] || !svixHeaders['svix-timestamp'] || !svixHeaders['svix-signature']) {
+      console.error('Error: Missing required Svix headers.');
+      return res.status(400).json({
+        success: false,
+        message: 'Error: Missing required Svix headers.',
+      });
+    }
+
+    let evt;
+
+    try {
+      // Verify the incoming webhook
+      evt = wh.verify(req.body, svixHeaders);
+    } catch (err) {
+      console.error('Error verifying webhook:', err.message);
+      return res.status(400).json({
+        success: false,
+        message: `Error verifying webhook: ${err.message}`,
+      });
+    }
+
+    // Destructure event details
+    const { id, type: eventType, data } = evt;
+
+    // Log webhook details
+    console.log(`Webhook received - ID: ${id}, Event Type: ${eventType}`);
+    console.log('Webhook Payload:', data);
+
+    // Event-specific logic
+    if (eventType === 'user.created') {
+      console.log('New user created with ID:', data.id);
+    }
+
+    // Respond to the webhook
+    return res.status(200).json({
+      success: true,
+      message: 'Webhook received successfully.',
+    });
+  }
 );
-
-// Webhook handler
-app.post('/webhook/clerk', async (req, res) => {
-  const SIGNING_SECRET = process.env.SIGNING_SECRET;
-
-  if (!SIGNING_SECRET) {
-    console.error('Error: SIGNING_SECRET not found in environment variables.');
-    return res.status(500).json({
-      success: false,
-      message: 'Server configuration error: SIGNING_SECRET is missing.',
-    });
-  }
-
-  const wh = new Webhook(SIGNING_SECRET);
-
-  // Get Svix headers for verification
-  const svixHeaders = {
-    'svix-id': req.headers['svix-id'],
-    'svix-timestamp': req.headers['svix-timestamp'],
-    'svix-signature': req.headers['svix-signature'],
-  };
-
-  // Check if necessary headers are present
-  if (!svixHeaders['svix-id'] || !svixHeaders['svix-timestamp'] || !svixHeaders['svix-signature']) {
-    console.error('Error: Missing required Svix headers.');
-    return res.status(400).json({
-      success: false,
-      message: 'Error: Missing required Svix headers.',
-    });
-  }
-
-  let evt;
-
-  try {
-    // Verify the incoming webhook
-    evt = wh.verify(req.body, svixHeaders);
-  } catch (err) {
-    console.error('Error verifying webhook:', err.message);
-    return res.status(400).json({
-      success: false,
-      message: `Error verifying webhook: ${err.message}`,
-    });
-  }
-
-  // Destructure event details only after verification succeeds
-  const { id, type: eventType, data } = evt;
-
-  // Log webhook details
-  console.log(`Webhook received - ID: ${id}, Event Type: ${eventType}`);
-  console.log('Webhook Payload:', data);
-
-  // Event-specific logic
-  if (eventType === 'user.created') {
-    console.log('New user created with ID:', data.id);
-    // Add additional processing logic here if required
-  }
-
-  // Respond to the webhook
-  return res.status(200).json({
-    success: true,
-    message: 'Webhook received successfully.',
-  });
-});
 
 // Middleware to serve correct MIME types
 app.use((req, res, next) => {
