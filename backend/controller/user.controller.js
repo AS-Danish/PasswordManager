@@ -14,10 +14,10 @@ async function handleWebhook(req, res) {
 
   const wh = new Webhook(SIGNING_SECRET);
 
-  // Extract raw body and headers
   const headers = req.headers;
-  const payload = req.body.toString('utf-8'); // Ensure raw body is string
-  console.log('Raw Body:', payload);
+  const payload = req.body.toString('utf-8'); // Ensure buffer is converted to string
+
+  console.log('Raw Body:', payload);  // Log the payload for debugging
   console.log('Headers:', headers);
 
   const svix_id = headers['svix-id'];
@@ -35,6 +35,7 @@ async function handleWebhook(req, res) {
   let evt;
 
   try {
+    // Verifying the webhook signature
     evt = wh.verify(payload, {
       'svix-id': svix_id,
       'svix-timestamp': svix_timestamp,
