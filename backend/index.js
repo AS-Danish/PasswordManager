@@ -74,7 +74,7 @@ app.post('/webhook/clerk', async (req, res) => {
   });
 });
 
-if (evt.type === 'user.created') {
+if (eventType === 'user.created') {
   console.log('userId:', evt.data.id)
 }
 
