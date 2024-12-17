@@ -13,11 +13,12 @@ async function handleWebhook(req, res) {
   }
 
   const wh = new Webhook(SIGNING_SECRET);
+
+  // Extract raw body and headers
   const headers = req.headers;
-  const payload = req.body.toString(); // Ensure buffer is converted to string
-  console.log('Request received:', req.body);
-  console.log(headers);
-  console.log(payload);
+  const payload = req.body.toString('utf-8'); // Ensure raw body is string
+  console.log('Raw Body:', payload);
+  console.log('Headers:', headers);
 
   const svix_id = headers['svix-id'];
   const svix_timestamp = headers['svix-timestamp'];
@@ -81,7 +82,7 @@ async function handleWebhook(req, res) {
           },
           { new: true }
         );
-        console.log(`User updated: ${updatedUser.username}`);
+        console.log(`User updated: ${updatedUser?.username}`);
         break;
       }
 

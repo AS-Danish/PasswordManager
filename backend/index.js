@@ -22,6 +22,14 @@ app.use((req, res, next) => {
   next();
 });
 
+// Exclude the `/webhook` route from JSON parsing
+app.use((req, res, next) => {
+  if (req.path.startsWith('/webhook')) {
+    return next(); // Skip `express.json()` for webhooks
+  }
+  express.json()(req, res, next);
+});
+
 
 app.listen(process.env.PORT, async () => {
   try {
