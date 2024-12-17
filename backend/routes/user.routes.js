@@ -8,6 +8,6 @@ const router = express.Router();
 router.use(bodyParser.raw({ type: 'application/json' }));
 
 // Route to handle webhooks
-router.post('/webhooks', handleWebhook);
+router.post('/clerk', handleWebhook);
 
 export default router;
