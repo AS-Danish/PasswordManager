@@ -48,11 +48,9 @@ app.post(
     let evt;
 
     try {
-      // Convert raw body buffer to string
+      // Convert raw body buffer to string and verify directly
       const payloadString = req.body.toString('utf8');
-      // Parse the string to JSON
-      const payload = JSON.parse(payloadString);
-      // Verify the incoming webhook
+      // Verify the incoming webhook with the raw string
       evt = wh.verify(payloadString, svixHeaders);
     } catch (err) {
       console.error('Error verifying webhook:', err.message);
