@@ -1,32 +1,27 @@
-import User from '../models/User.model.js'
+import User from '../models/User.model.js';
 import { Webhook } from 'svix';
-import bodyParser from 'body-parser';
 
-// Handle incoming webhook from Clerk
 async function handleWebhook(req, res) {
   const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
   if (!SIGNING_SECRET) {
+    console.error('Missing SIGNING_SECRET in environment variables.');
     return res.status(400).json({
       success: false,
       message: 'Error: Please add SIGNING_SECRET to .env',
     });
   }
 
-  // Create Svix Webhook instance with Clerk's secret
   const wh = new Webhook(SIGNING_SECRET);
-
-  // Get headers and raw body
   const headers = req.headers;
-  const payload = req.body.toString(); // Convert buffer to string
+  const payload = req.body.toString(); // Ensure buffer is converted to string
 
-  // Get Svix headers for verification
   const svix_id = headers['svix-id'];
   const svix_timestamp = headers['svix-timestamp'];
   const svix_signature = headers['svix-signature'];
 
-  // If any required headers are missing, return an error
   if (!svix_id || !svix_timestamp || !svix_signature) {
+    console.error('Missing required Svix headers.');
     return res.status(400).json({
       success: false,
       message: 'Error: Missing svix headers',
@@ -35,22 +30,21 @@ async function handleWebhook(req, res) {
 
   let evt;
 
-  // Attempt to verify the incoming webhook
   try {
     evt = wh.verify(payload, {
       'svix-id': svix_id,
       'svix-timestamp': svix_timestamp,
       'svix-signature': svix_signature,
     });
+    console.log('Webhook verified successfully:', evt);
   } catch (err) {
-    console.log('Error: Could not verify webhook:', err.message);
+    console.error('Error verifying webhook:', err.message);
     return res.status(400).json({
       success: false,
       message: err.message,
     });
   }
 
-  // Process event based on type
   const { id } = evt.data;
   const eventType = evt.type;
 
@@ -72,7 +66,7 @@ async function handleWebhook(req, res) {
       }
 
       case 'user.updated': {
-        await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
           { clerkId: id },
           {
             email: evt.data.email_addresses[0]?.email_address || '',
@@ -84,7 +78,7 @@ async function handleWebhook(req, res) {
           },
           { new: true }
         );
-        console.log(`User updated: ${id}`);
+        console.log(`User updated: ${updatedUser.username}`);
         break;
       }
 
@@ -100,7 +94,7 @@ async function handleWebhook(req, res) {
 
     res.status(200).json({
       success: true,
-      message: 'Webhook received and processed',
+      message: 'Webhook received and processed successfully',
     });
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -111,4 +105,4 @@ async function handleWebhook(req, res) {
   }
 }
 
-export {handleWebhook};
+export { handleWebhook };
