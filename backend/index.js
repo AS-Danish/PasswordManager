@@ -15,7 +15,7 @@ app.use(express.json());
 // Webhook endpoint with raw body parsing for Svix
 app.post(
   '/webhook/clerk',
-  bodyParser.raw({ type: 'application/json' }),
+  bodyParser.raw({ type: 'application/json', limit: '5mb' }),
   async (req, res) => {
     const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
@@ -36,24 +36,22 @@ app.post(
       'svix-signature': req.headers['svix-signature'],
     };
 
-    // Check if necessary headers are present
-    if (!svixHeaders['svix-id'] || !svixHeaders['svix-timestamp'] || !svixHeaders['svix-signature']) {
-      console.error('Error: Missing required Svix headers.');
-      return res.status(400).json({
-        success: false,
-        message: 'Error: Missing required Svix headers.',
-      });
-    }
+    // Debug logging
+    console.log('Received Headers:', svixHeaders);
+    console.log('Raw Body:', req.body.toString('utf8'));
 
     let evt;
 
     try {
-      // Convert raw body buffer to string and verify directly
-      const payloadString = req.body.toString('utf8');
-      // Verify the incoming webhook with the raw string
-      evt = wh.verify(payloadString, svixHeaders);
+      // Verify the webhook with the raw buffer
+      evt = wh.verify(req.body, svixHeaders);
     } catch (err) {
-      console.error('Error verifying webhook:', err.message);
+      console.error('Error verifying webhook:', err);
+      console.error('Error details:', {
+        message: err.message,
+        headers: svixHeaders,
+        signingSecret: SIGNING_SECRET.substring(0, 4) + '...' // Log only first 4 chars for security
+      });
       return res.status(400).json({
         success: false,
         message: `Error verifying webhook: ${err.message}`,
