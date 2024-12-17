@@ -32,8 +32,6 @@ app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'})
     'svix-signature': req.headers['svix-signature'],
   };
 
-  // Debug logging
-  console.log('Received Headers:', svixHeaders);
   
   let evt;
 
@@ -43,18 +41,10 @@ app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'})
       ? req.body.toString('utf8') 
       : JSON.stringify(req.body);
       
-    console.log('Payload String:', payloadString); // Debug log
     
     evt = wh.verify(payloadString, svixHeaders);
   } catch (err) {
     console.error('Error verifying webhook:', err);
-    console.error('Error details:', {
-      message: err.message,
-      headers: svixHeaders,
-      signingSecret: SIGNING_SECRET.substring(0, 4) + '...',
-      bodyType: typeof req.body,
-      isBuffer: Buffer.isBuffer(req.body)
-    });
     return res.status(400).json({
       success: false,
       message: `Error verifying webhook: ${err.message}`,
@@ -63,10 +53,6 @@ app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'})
 
   // Destructure event details
   const { id, type: eventType, data } = evt;
-
-  // Log webhook details
-  console.log(`Webhook received - ID: ${id}, Event Type: ${eventType}`);
-  console.log('Webhook Payload:', data);
 
   // Handle different webhook events
   switch (eventType) {
@@ -165,7 +151,7 @@ app.use((req, res, next) => {
 app.listen(process.env.PORT, async () => {
   try {
     await dbConnection();
-    console.log(`Server Running on Port ${process.env.PORT}`);
+
   } catch (error) {
     console.error('Error connecting to database:', error);
     process.exit(1);
