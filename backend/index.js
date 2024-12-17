@@ -11,7 +11,6 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-// Use user routes
 
 // Middleware to parse raw body as needed by svix for signature verification
 app.use(
@@ -62,10 +61,18 @@ app.post('/webhook/clerk', async (req, res) => {
     });
   }
 
-  // Log webhook details
+  // Destructure event details only after verification succeeds
   const { id, type: eventType, data } = evt;
+
+  // Log webhook details
   console.log(`Webhook received - ID: ${id}, Event Type: ${eventType}`);
   console.log('Webhook Payload:', data);
+
+  // Event-specific logic
+  if (eventType === 'user.created') {
+    console.log('New user created with ID:', data.id);
+    // Add additional processing logic here if required
+  }
 
   // Respond to the webhook
   return res.status(200).json({
@@ -73,11 +80,6 @@ app.post('/webhook/clerk', async (req, res) => {
     message: 'Webhook received successfully.',
   });
 });
-
-if (eventType === 'user.created') {
-  console.log('userId:', evt.data.id)
-}
-
 
 // Middleware to serve correct MIME types
 app.use((req, res, next) => {
@@ -87,7 +89,7 @@ app.use((req, res, next) => {
   next();
 });
 
-
+// Start server
 app.listen(process.env.PORT, async () => {
   try {
     await dbConnection();
