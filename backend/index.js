@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
-import { User } from './models/User.model.js';
+import  User  from './models/User.model.js';
 
 dotenv.config();
 
