@@ -1,6 +1,8 @@
 import User from '../models/User.model.js';
 import { Webhook } from 'svix';
+import bodyParser from 'body-parser';
 
+// Webhook route setup
 async function handleWebhook(req, res) {
   const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
@@ -12,10 +14,11 @@ async function handleWebhook(req, res) {
     });
   }
 
+  // Create a new Webhook instance from the Svix SDK
   const wh = new Webhook(SIGNING_SECRET);
 
   const headers = req.headers;
-  const payload = req.body.toString('utf-8'); // Ensure buffer is converted to string
+  const payload = req.body.toString(); // Ensure buffer is converted to string
 
   console.log('Raw Body:', payload);  // Log the payload for debugging
   console.log('Headers:', headers);
@@ -35,12 +38,16 @@ async function handleWebhook(req, res) {
   let evt;
 
   try {
-    // Verifying the webhook signature
+    // Split the signature into two parts
+    const [version1, signature1] = svix_signature.split(' ');
+
+    // Verifying the webhook signature using only the first part
     evt = wh.verify(payload, {
       'svix-id': svix_id,
       'svix-timestamp': svix_timestamp,
-      'svix-signature': svix_signature,
+      'svix-signature': signature1,
     });
+
     console.log('Webhook verified successfully:', evt);
   } catch (err) {
     console.error('Error verifying webhook:', err.message);
