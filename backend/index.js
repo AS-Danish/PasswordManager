@@ -15,7 +15,7 @@ app.use(express.json());
 // Webhook endpoint with raw body parsing for Svix
 app.post(
   '/webhook/clerk',
-  bodyParser.raw({ type: 'application/json' }), // Ensure raw body for webhook verification
+  bodyParser.raw({ type: 'application/json' }),
   async (req, res) => {
     const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
@@ -48,8 +48,12 @@ app.post(
     let evt;
 
     try {
+      // Convert raw body buffer to string
+      const payloadString = req.body.toString('utf8');
+      // Parse the string to JSON
+      const payload = JSON.parse(payloadString);
       // Verify the incoming webhook
-      evt = wh.verify(req.body, svixHeaders);
+      evt = wh.verify(payloadString, svixHeaders);
     } catch (err) {
       console.error('Error verifying webhook:', err.message);
       return res.status(400).json({
