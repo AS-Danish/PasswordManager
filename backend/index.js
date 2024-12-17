@@ -4,6 +4,7 @@ import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
 import bodyParser from 'body-parser';
 import { Webhook } from 'svix';
+import { User } from './models/User.js';
 
 dotenv.config();
 
@@ -68,17 +69,87 @@ app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'})
   console.log(`Webhook received - ID: ${id}, Event Type: ${eventType}`);
   console.log('Webhook Payload:', data);
 
-  // Event-specific logic
-  if (eventType === 'user.created') {
-    console.log('New user created with ID:', data.id);
+  // Handle different webhook events
+  switch (eventType) {
+    case 'user.created':
+      await handleUserCreated(data);
+      break;
+    case 'user.updated':
+      await handleUserUpdated(data);
+      break;
+    case 'user.deleted':
+      await handleUserDeleted(data);
+      break;
+    default:
+      console.log(`Unhandled event type: ${eventType}`);
   }
 
   // Respond to the webhook
   return res.status(200).json({
     success: true,
-    message: 'Webhook received successfully.',
+    message: 'Webhook received and processed successfully.',
   });
 });
+
+// Handler functions for different webhook events
+async function handleUserCreated(data) {
+  try {
+    const newUser = new User({
+      clerkId: data.id,
+      email: data.email_addresses[0]?.email_address,
+      firstName: data.first_name,
+      lastName: data.last_name,
+      imageUrl: data.image_url,
+    });
+
+    await newUser.save();
+    console.log('User created in MongoDB:', newUser);
+  } catch (error) {
+    console.error('Error creating user in MongoDB:', error);
+    throw error;
+  }
+}
+
+async function handleUserUpdated(data) {
+  try {
+    const updatedUser = await User.findOneAndUpdate(
+      { clerkId: data.id },
+      {
+        email: data.email_addresses[0]?.email_address,
+        firstName: data.first_name,
+        lastName: data.last_name,
+        imageUrl: data.image_url,
+        updatedAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.log('User not found in MongoDB, creating new user');
+      await handleUserCreated(data);
+      return;
+    }
+
+    console.log('User updated in MongoDB:', updatedUser);
+  } catch (error) {
+    console.error('Error updating user in MongoDB:', error);
+    throw error;
+  }
+}
+
+async function handleUserDeleted(data) {
+  try {
+    const deletedUser = await User.findOneAndDelete({ clerkId: data.id });
+    if (deletedUser) {
+      console.log('User deleted from MongoDB:', deletedUser);
+    } else {
+      console.log('User not found in MongoDB');
+    }
+  } catch (error) {
+    console.error('Error deleting user from MongoDB:', error);
+    throw error;
+  }
+}
 
 // Then add general middleware
 app.use(express.json());
