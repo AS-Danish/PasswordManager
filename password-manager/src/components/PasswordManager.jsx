@@ -123,6 +123,12 @@ const PasswordManager = () => {
 
   const handleDelete = async(id) => {
     try {
+      // Add confirmation dialog
+      if (!window.confirm('Are you sure you want to delete this password?')) {
+        return;
+      }
+      console.log('Deleting password:', id); // Debug log
+
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${id}`, {
         method: 'DELETE',
         headers: {
@@ -134,12 +140,20 @@ const PasswordManager = () => {
           clerkId: user.id
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete password');
+      }
+
       const data = await response.json();
       if (data.success) {
         fetchPasswords(); // Refresh the passwords list
+        alert('Password deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting password:', error);
+      alert(error.message || 'Failed to delete password');
     }
   }
 
@@ -435,7 +449,7 @@ const PasswordManager = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDelete(password.Iid)}
+                          onClick={() => handleDelete(password._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           Delete

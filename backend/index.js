@@ -232,6 +232,16 @@ app.delete('/api/passwords/:id', async (req, res) => {
     const { id } = req.params;
     const { clerkId } = req.body; // For verification
 
+    // Validate id parameter
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password ID is required'
+      });
+    }
+
+    console.log('Deleting password:', { id, clerkId }); // Debug log
+
     const password = await Password.findOne({ _id: id, userId: clerkId });
     if (!password) {
       return res.status(404).json({
