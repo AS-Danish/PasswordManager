@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: ['https://passwordmanager-mtph.onrender.com'],
+  origin: ['https://passwordmanager-mtph.onrender.com', 'https://secpm.netlify.app'],
   credentials: true
 }));
 
