@@ -114,7 +114,7 @@ const PasswordManager = () => {
   const handleEdit = (password) => {
     setFormData({
       email: password.email,
-      username: password.username || '',
+      username: password.username,
       password: password.password,
       siteLink: password.siteUrl
     });
