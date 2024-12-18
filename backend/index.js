@@ -98,7 +98,6 @@ async function handleUserCreated(data) {
     });
 
     await newUser.save();
-    console.log('User created in MongoDB:', newUser);
   } catch (error) {
     console.error('Error creating user in MongoDB:', error);
     throw error;
@@ -120,12 +119,10 @@ async function handleUserUpdated(data) {
     );
 
     if (!updatedUser) {
-      console.log('User not found in MongoDB, creating new user');
       await handleUserCreated(data);
       return;
     }
 
-    console.log('User updated in MongoDB:', updatedUser);
   } catch (error) {
     console.error('Error updating user in MongoDB:', error);
     throw error;
@@ -135,11 +132,9 @@ async function handleUserUpdated(data) {
 async function handleUserDeleted(data) {
   try {
     const deletedUser = await User.findOneAndDelete({ clerkId: data.id });
-    if (deletedUser) {
-      console.log('User deleted from MongoDB:', deletedUser);
-    } else {
+    if (!deletedUser) {
       console.log('User not found in MongoDB');
-    }
+    } 
   } catch (error) {
     console.error('Error deleting user from MongoDB:', error);
     throw error;
@@ -162,12 +157,9 @@ app.post('/api/passwords', async (req, res) => {
   try {
     const { clerkId, Username, siteUrl, email, password } = req.body;
 
-    console.log('Received password data:', { clerkId, email, siteUrl });
-
     // Verify if user exists
     const user = await User.findOne({ clerkId });
     if (!user) {
-      console.log('User not found:', clerkId); // Debug log
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -184,7 +176,6 @@ app.post('/api/passwords', async (req, res) => {
     });
 
     await newPassword.save();
-    console.log('Password saved successfully'); // Debug log
 
     res.status(201).json({
       success: true,
@@ -206,10 +197,8 @@ app.post('/api/passwords', async (req, res) => {
 app.get('/api/passwords/:clerkId', async (req, res) => {
   try {
     const { clerkId } = req.params;
-    console.log('Fetching passwords for user:', clerkId); // Debug log
 
     const passwords = await Password.find({ userId: clerkId });
-    console.log('Found passwords:', passwords.length); // Debug log
 
     res.status(200).json({
       success: true,
@@ -239,8 +228,6 @@ app.delete('/api/passwords/:id', async (req, res) => {
         message: 'Password ID is required'
       });
     }
-
-    console.log('Deleting password:', { id, clerkId }); // Debug log
 
     const password = await Password.findOne({ _id: id, userId: clerkId });
     if (!password) {
