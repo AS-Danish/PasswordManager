@@ -4,7 +4,7 @@ import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
 import  User  from './models/User.model.js';
-import { Password } from './models/Password.model.js';
+import { Password, encryptPassword } from './models/Password.model.js';
 
 dotenv.config();
 
@@ -159,6 +159,9 @@ app.post('/api/passwords', async (req, res) => {
   try {
     const { clerkId, Username, siteUrl, email, password } = req.body;
 
+    // Encrypt the password before saving
+    const { encryptedData, iv } = encryptPassword(password);
+
     // Create new password entry
     const newPassword = new Password({
       userId: clerkId,
@@ -166,8 +169,8 @@ app.post('/api/passwords', async (req, res) => {
       siteUrl,
       email,
       password: {
-        encryptedData: password,
-        iv: '' // Will be set during encryption
+        encryptedData,
+        iv
       }
     });
 
@@ -273,6 +276,9 @@ app.put('/api/passwords/:id', async (req, res) => {
       });
     }
 
+    // Encrypt the new password
+    const { encryptedData, iv } = encryptPassword(password);
+
     const updatedPassword = await Password.findByIdAndUpdate(
       id,
       {
@@ -280,8 +286,8 @@ app.put('/api/passwords/:id', async (req, res) => {
         siteUrl,
         email,
         password: {
-          encryptedData: password,
-          iv: '' // Will be set during encryption
+          encryptedData,
+          iv
         },
         updatedAt: new Date()
       },

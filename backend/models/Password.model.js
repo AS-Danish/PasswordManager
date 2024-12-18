@@ -2,7 +2,33 @@ import mongoose from 'mongoose';
 import crypto from 'crypto';
 
 const algorithm = 'aes-256-cbc';
-const secretKey = process.env.ENCRYPTION_KEY; // Must be 32 chars
+const secretKey = process.env.ENCRYPTION_KEY || 'default-secret-key-32-chars-long!';
+
+// Move encryption functions outside schema
+const encryptPassword = (text) => {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return {
+    iv: iv.toString('hex'),
+    encryptedData: encrypted.toString('hex')
+  };
+};
+
+const decryptPassword = (encryptedData, iv) => {
+  try {
+    const ivBuffer = Buffer.from(iv, 'hex');
+    const encryptedText = Buffer.from(encryptedData, 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey), ivBuffer);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return null;
+  }
+};
 
 const passwordSchema = new mongoose.Schema({
   userId: {
@@ -43,39 +69,10 @@ const passwordSchema = new mongoose.Schema({
   }
 });
 
-// Encrypt password before saving
-passwordSchema.pre('save', async function(next) {
-  if (!this.isModified('password.encryptedData')) {
-    return next();
-  }
-  
-  try {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey), iv);
-    let encrypted = cipher.update(this.password.encryptedData);
-    encrypted = Buffer.concat([encrypted, cipher.final()]);
-    
-    this.password.encryptedData = encrypted.toString('hex');
-    this.password.iv = iv.toString('hex');
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Method to decrypt password
+// Update the decrypt method
 passwordSchema.methods.getDecryptedPassword = function() {
-  try {
-    const iv = Buffer.from(this.password.iv, 'hex');
-    const encryptedText = Buffer.from(this.password.encryptedData, 'hex');
-    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey), iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
-  } catch (error) {
-    console.error('Decryption error:', error);
-    return null;
-  }
+  return decryptPassword(this.password.encryptedData, this.password.iv);
 };
 
 export const Password = mongoose.model('Password', passwordSchema); 
+export { encryptPassword, decryptPassword }; 
