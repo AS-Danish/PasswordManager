@@ -114,7 +114,7 @@ const PasswordManager = () => {
   const handleEdit = (password) => {
     setFormData({
       email: password.email,
-      username: password.username,
+      username: password.Username,
       password: password.password,
       siteLink: password.siteUrl
     });
@@ -207,7 +207,7 @@ const PasswordManager = () => {
           body: JSON.stringify({
             clerkId: user.id,
             email: formData.email,
-            username: formData.username,
+            Username: formData.username,
             password: formData.password,
             siteUrl: formData.siteLink
           }),
@@ -229,7 +229,7 @@ const PasswordManager = () => {
           body: JSON.stringify({
             clerkId: user.id,
             email: formData.email,
-            username: formData.username,
+            Username: formData.username,
             password: formData.password,
             siteUrl: formData.siteLink
           }),
@@ -413,7 +413,7 @@ const PasswordManager = () => {
                         {password.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {password.username || '-'}
+                        {password.Username || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {showPassword[password.Iid] ? password.password : '••••••••'}
