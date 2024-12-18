@@ -5,6 +5,7 @@ import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
 import  User  from './models/User.model.js';
 import { Password } from './models/Password.model.js';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -182,7 +183,10 @@ app.post('/api/passwords', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Password saved successfully',
-      data: newPassword
+      data: {
+        ...newPassword._doc,
+        password: password // Send back original password
+      }
     });
 
   } catch (error) {
@@ -202,9 +206,15 @@ app.get('/api/passwords/:clerkId', async (req, res) => {
 
     const passwords = await Password.find({ userId: clerkId });
 
+    // Send back passwords with decrypted values
+    const decryptedPasswords = passwords.map(pass => ({
+      ...pass._doc,
+      password: pass.password // Already decrypted by mongoose
+    }));
+
     res.status(200).json({
       success: true,
-      data: passwords
+      data: decryptedPasswords
     });
 
   } catch (error) {
@@ -270,13 +280,18 @@ app.put('/api/passwords/:id', async (req, res) => {
       });
     }
 
+    // Hash the new password if it's changed
+    const hashedPassword = password !== existingPassword.password ? 
+      await bcrypt.hash(password, 10) : 
+      existingPassword.password;
+
     const updatedPassword = await Password.findByIdAndUpdate(
       id,
       {
         Username,
         siteUrl,
         email,
-        password,
+        password: hashedPassword,
         updatedAt: new Date()
       },
       { new: true }
@@ -285,7 +300,10 @@ app.put('/api/passwords/:id', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Password updated successfully',
-      data: updatedPassword
+      data: {
+        ...updatedPassword._doc,
+        password: password // Send back original password
+      }
     });
 
   } catch (error) {
