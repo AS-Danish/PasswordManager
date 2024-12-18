@@ -123,11 +123,26 @@ const PasswordManager = () => {
     passwordId: null
   });
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${user.sessionId}`,
-    'Accept': 'application/json'
-  });
+  const getAuthHeaders = async () => {
+    try {
+      // Get the session token directly
+      const session = await user.getSession();
+      const token = session.sessionId;
+      
+      return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      };
+    } catch (error) {
+      console.error('Error getting token:', error);
+      toast.error('Authentication error');
+      return {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      };
+    }
+  };
 
   const handleEdit = (password) => {
     setFormData({
@@ -141,9 +156,10 @@ const PasswordManager = () => {
 
   const handleDelete = async (id) => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${id}`, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
+        headers,
         credentials: 'include',
         body: JSON.stringify({
           clerkId: user.id
@@ -208,8 +224,9 @@ const PasswordManager = () => {
 
   const fetchPasswords = async () => {
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${user.id}`, {
-        headers: getAuthHeaders(),
+        headers,
         credentials: 'include',
       });
 
@@ -228,11 +245,12 @@ const PasswordManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const headers = await getAuthHeaders();
       if (editingId !== null) {
         // Update existing password
         const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${editingId}`, {
           method: 'PUT',
-          headers: getAuthHeaders(),
+          headers,
           body: JSON.stringify({
             clerkId: user.id,
             email: formData.email,
@@ -257,7 +275,7 @@ const PasswordManager = () => {
         // Create new password
         const response = await fetch('https://passwordmanager-mtph.onrender.com/api/passwords', {
           method: 'POST',
-          headers: getAuthHeaders(),
+          headers,
           credentials: 'include',
           body: JSON.stringify({
             clerkId: user.id,
