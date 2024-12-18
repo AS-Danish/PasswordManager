@@ -3,6 +3,9 @@ import { motion } from 'framer-motion'
 import { useUser, UserButton } from '@clerk/clerk-react'
 import PasswordGenerator from './PasswordGenerator'
 import { checkPasswordStrength } from '../utils/passwordStrength'
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import DeleteConfirmationModal from './DeleteConfirmationModal'
 
 // Dashboard Navbar Component
 const DashboardNavbar = () => {
@@ -115,18 +118,10 @@ const PasswordManager = () => {
 
   const [isPasswordGeneratorOpen, setIsPasswordGeneratorOpen] = useState(false)
 
-  /* const handleSubmit = (e) => {
-    e.preventDefault()
-    if (editingId !== null) {
-      setPasswords(passwords.map(pass =>
-        pass.id === editingId ? { ...formData, id: editingId } : pass
-      ))
-      setEditingId(null)
-    } else {
-      setPasswords([...passwords, { ...formData, id: Date.now() }])
-    }
-    setFormData({ email: '', username: '', password: '', siteLink: '' })
-  }*/
+  const [deleteModal, setDeleteModal] = useState({
+    isOpen: false,
+    passwordId: null
+  });
 
   const handleEdit = (password) => {
     setFormData({
@@ -140,12 +135,6 @@ const PasswordManager = () => {
 
   const handleDelete = async (id) => {
     try {
-      // Add confirmation dialog
-      if (!window.confirm('Are you sure you want to delete this password?')) {
-        return;
-      }
-      console.log('Deleting password:', id); // Debug log
-
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${id}`, {
         method: 'DELETE',
         headers: {
@@ -166,13 +155,33 @@ const PasswordManager = () => {
       const data = await response.json();
       if (data.success) {
         fetchPasswords(); // Refresh the passwords list
-        alert('Password deleted successfully');
+        toast.success('Password deleted successfully', {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        });
       }
     } catch (error) {
       console.error('Error deleting password:', error);
-      alert(error.message || 'Failed to delete password');
+      toast.error(error.message || 'Failed to delete password', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+    } finally {
+      setDeleteModal({ isOpen: false, passwordId: null });
     }
   }
+
+  const confirmDelete = (passwordId) => {
+    setDeleteModal({ isOpen: true, passwordId });
+  };
 
   const handleCopy = async (text) => {
     try {
@@ -232,6 +241,14 @@ const PasswordManager = () => {
         const data = await response.json();
         if (data.success) {
           fetchPasswords(); // Refresh the passwords list
+          toast.success('Password Updated successfully', {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
           setEditingId(null);
         }
       } else {
@@ -260,6 +277,14 @@ const PasswordManager = () => {
         if (data.success) {
           fetchPasswords(); // Refresh the passwords list
           setFormData({ email: '', username: '', password: '', siteLink: '' });
+          toast.success('Password Added successfully', {
+            position: "top-right",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
         }
       }
       // Reset form
@@ -489,7 +514,7 @@ const PasswordManager = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDelete(password._id)}
+                          onClick={() => confirmDelete(password._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           Delete
@@ -521,6 +546,14 @@ const PasswordManager = () => {
         onClose={() => setIsPasswordGeneratorOpen(false)}
         onSelectPassword={(password) => setFormData({ ...formData, password })}
       />
+
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, passwordId: null })}
+        onConfirm={() => handleDelete(deleteModal.passwordId)}
+      />
+
+      <ToastContainer />
     </div>
   )
 }
