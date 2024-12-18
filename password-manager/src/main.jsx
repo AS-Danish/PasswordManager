@@ -14,11 +14,12 @@ if (!PUBLISHABLE_KEY) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY} suppressDevTools={true} appearance={{
-    elements: {
-      clerkFooter: 'hidden',
-    },
-  }}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} 
+      appearance={{
+        elements: {
+          footer: "hidden"
+        },
+      }}>
       <App />
     </ClerkProvider>
   </StrictMode>,
