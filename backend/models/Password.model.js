@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+
+const algorithm = 'aes-256-cbc';
+const secretKey = process.env.ENCRYPTION_KEY; // Must be 32 chars
 
 const passwordSchema = new mongoose.Schema({
   userId: {
@@ -21,8 +24,14 @@ const passwordSchema = new mongoose.Schema({
     required: true
   },
   password: {
-    type: String,
-    required: true
+    encryptedData: {
+      type: String,
+      required: true
+    },
+    iv: {
+      type: String,
+      required: true
+    }
   },
   createdAt: {
     type: Date,
@@ -36,20 +45,37 @@ const passwordSchema = new mongoose.Schema({
 
 // Encrypt password before saving
 passwordSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password.encryptedData')) {
+    return next();
+  }
   
   try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, Buffer.from(secretKey), iv);
+    let encrypted = cipher.update(this.password.encryptedData);
+    encrypted = Buffer.concat([encrypted, cipher.final()]);
+    
+    this.password.encryptedData = encrypted.toString('hex');
+    this.password.iv = iv.toString('hex');
     next();
   } catch (error) {
     next(error);
   }
 });
 
-// Add method to decrypt password
-passwordSchema.methods.decryptPassword = async function() {
-  return this.password;
+// Method to decrypt password
+passwordSchema.methods.getDecryptedPassword = function() {
+  try {
+    const iv = Buffer.from(this.password.iv, 'hex');
+    const encryptedText = Buffer.from(this.password.encryptedData, 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, Buffer.from(secretKey), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (error) {
+    console.error('Decryption error:', error);
+    return null;
+  }
 };
 
 export const Password = mongoose.model('Password', passwordSchema); 

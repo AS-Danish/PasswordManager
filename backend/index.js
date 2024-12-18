@@ -5,7 +5,6 @@ import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
 import  User  from './models/User.model.js';
 import { Password } from './models/Password.model.js';
-import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -160,22 +159,16 @@ app.post('/api/passwords', async (req, res) => {
   try {
     const { clerkId, Username, siteUrl, email, password } = req.body;
 
-    // Verify if user exists
-    const user = await User.findOne({ clerkId });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
     // Create new password entry
     const newPassword = new Password({
       userId: clerkId,
       Username,
       siteUrl,
       email,
-      password
+      password: {
+        encryptedData: password,
+        iv: '' // Will be set during encryption
+      }
     });
 
     await newPassword.save();
@@ -206,10 +199,10 @@ app.get('/api/passwords/:clerkId', async (req, res) => {
 
     const passwords = await Password.find({ userId: clerkId });
 
-    // Send back passwords with decrypted values
+    // Decrypt passwords before sending
     const decryptedPasswords = passwords.map(pass => ({
       ...pass._doc,
-      password: pass.password // Already decrypted by mongoose
+      password: pass.getDecryptedPassword()
     }));
 
     res.status(200).json({
@@ -280,18 +273,16 @@ app.put('/api/passwords/:id', async (req, res) => {
       });
     }
 
-    // Hash the new password if it's changed
-    const hashedPassword = password !== existingPassword.password ? 
-      await bcrypt.hash(password, 10) : 
-      existingPassword.password;
-
     const updatedPassword = await Password.findByIdAndUpdate(
       id,
       {
         Username,
         siteUrl,
         email,
-        password: hashedPassword,
+        password: {
+          encryptedData: password,
+          iv: '' // Will be set during encryption
+        },
         updatedAt: new Date()
       },
       { new: true }
@@ -300,7 +291,7 @@ app.put('/api/passwords/:id', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Password updated successfully',
-      data: {
+      data:  {
         ...updatedPassword._doc,
         password: password // Send back original password
       }
