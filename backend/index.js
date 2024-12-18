@@ -165,7 +165,7 @@ app.post('/api/passwords', async (req, res) => {
     // Create new password entry
     const newPassword = new Password({
       userId: clerkId,
-      Username: Username || 'Nothing',
+      Username: Username || '-',
       siteUrl,
       email,
       password: {

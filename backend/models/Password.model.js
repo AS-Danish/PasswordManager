@@ -39,7 +39,7 @@ const passwordSchema = new mongoose.Schema({
   Username: {
     type: String,
     required: true,
-    default: 'Nothing'
+    default: '-'
   },
   siteUrl: {
     type: String,
