@@ -83,6 +83,13 @@ app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'})
 // Handler functions for different webhook events
 async function handleUserCreated(data) {
   try {
+    // Check if user already exists
+    const existingUser = await User.findOne({ clerkId: data.id });
+    if (existingUser) {
+      console.log('User already exists:', existingUser);
+      return existingUser;
+    }
+
     const newUser = new User({
       clerkId: data.id,
       email: data.email_addresses[0]?.email_address,
@@ -91,8 +98,9 @@ async function handleUserCreated(data) {
       imageUrl: data.image_url,
     });
 
-    await newUser.save();
-    console.log('User created in MongoDB:', newUser);
+    const savedUser = await newUser.save();
+    console.log('User created in MongoDB:', savedUser);
+    return savedUser;
   } catch (error) {
     console.error('Error creating user in MongoDB:', error);
     throw error;
