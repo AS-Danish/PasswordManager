@@ -92,9 +92,10 @@ async function handleUserCreated(data) {
     const newUser = new User({
       clerkId: data.id,
       email: data.email_addresses[0]?.email_address,
+      username: data.username,
       firstName: data.first_name,
       lastName: data.last_name,
-      imageUrl: data.image_url,
+      profileAvatar: data.image_url,
     });
 
     await newUser.save();
@@ -110,9 +111,10 @@ async function handleUserUpdated(data) {
       { clerkId: data.id },
       {
         email: data.email_addresses[0]?.email_address,
+        username: data.username,
         firstName: data.first_name,
         lastName: data.last_name,
-        imageUrl: data.image_url,
+        profileAvatar: data.image_url,
         updatedAt: new Date(),
       },
       { new: true }
