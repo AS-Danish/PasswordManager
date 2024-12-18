@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useUser, UserButton } from '@clerk/clerk-react'
 import PasswordGenerator from './PasswordGenerator'
+import { checkPasswordStrength } from '../utils/passwordStrength'
 
 // Dashboard Navbar Component
 const DashboardNavbar = () => {
@@ -41,20 +42,36 @@ const DashboardNavbar = () => {
 }
 
 // Dashboard Stats Component
-const DashboardStats = ({ totalPasswords }) => {
+const DashboardStats = ({ passwords }) => {
+  const passwordStrengths = passwords.reduce((acc, curr) => {
+    const strength = checkPasswordStrength(curr.password)
+    acc[strength] = (acc[strength] || 0) + 1
+    return acc
+  }, { weak: 0, medium: 0, strong: 0 })
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <div className="bg-white p-6 rounded-xl shadow-md">
         <div className="text-sm font-medium text-gray-500">Total Passwords</div>
-        <div className="mt-2 text-3xl font-bold text-gray-900">{totalPasswords}</div>
+        <div className="mt-2 text-3xl font-bold text-gray-900">{passwords.length}</div>
       </div>
       <div className="bg-white p-6 rounded-xl shadow-md">
         <div className="text-sm font-medium text-gray-500">Weak Passwords</div>
-        <div className="mt-2 text-3xl font-bold text-red-600">0</div>
+        <div className="mt-2 text-3xl font-bold text-red-600">{passwordStrengths.weak}</div>
+        {passwordStrengths.weak > 0 && (
+          <div className="mt-1 text-sm text-red-500">
+            Consider updating these passwords
+          </div>
+        )}
       </div>
       <div className="bg-white p-6 rounded-xl shadow-md">
         <div className="text-sm font-medium text-gray-500">Strong Passwords</div>
-        <div className="mt-2 text-3xl font-bold text-green-600">{totalPasswords}</div>
+        <div className="mt-2 text-3xl font-bold text-green-600">{passwordStrengths.strong}</div>
+        {passwordStrengths.medium > 0 && (
+          <div className="mt-1 text-sm text-yellow-500">
+            {passwordStrengths.medium} passwords could be stronger
+          </div>
+        )}
       </div>
     </div>
   )
@@ -121,7 +138,7 @@ const PasswordManager = () => {
     setEditingId(password._id); // Use _id from MongoDB
   };
 
-  const handleDelete = async(id) => {
+  const handleDelete = async (id) => {
     try {
       // Add confirmation dialog
       if (!window.confirm('Are you sure you want to delete this password?')) {
@@ -262,13 +279,33 @@ const PasswordManager = () => {
     }
   }
 
+  const getPasswordStrengthBadge = (password) => {
+    const strength = checkPasswordStrength(password);
+    const badges = {
+      weak: 'bg-red-100 text-red-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      strong: 'bg-green-100 text-green-800'
+    };
+    const labels = {
+      weak: 'Weak',
+      medium: 'Medium',
+      strong: 'Strong'
+    };
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${badges[strength]}`}>
+        {labels[strength]}
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <DashboardNavbar />
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <DashboardStats totalPasswords={passwords.length} />
+          <DashboardStats passwords={passwords} />
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -416,7 +453,10 @@ const PasswordManager = () => {
                         {password.Username || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {showPassword[password.Iid] ? password.password : '••••••••'}
+                        <div className="flex items-center space-x-2">
+                          <span>{showPassword[password._id] ? password.password : '••••••••'}</span>
+                          {getPasswordStrengthBadge(password.password)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                         <motion.button
@@ -424,11 +464,11 @@ const PasswordManager = () => {
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setShowPassword({
                             ...showPassword,
-                            [password.Iid]: !showPassword[password.Iid]
+                            [password._id]: !showPassword[password._id]
                           })}
                           className="text-indigo-600 hover:text-indigo-900"
                         >
-                          {showPassword[password.Iid] ? 'Hide' : 'View'}
+                          {showPassword[password._id] ? 'Hide' : 'View'}
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
