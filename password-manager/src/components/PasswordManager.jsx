@@ -123,7 +123,7 @@ const PasswordManager = () => {
 
   const handleDelete = async(id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/passwords/${id}`, {
+      const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${id}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ const PasswordManager = () => {
 
   const fetchPasswords = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/passwords/${user.id}`);
+      const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${user.id}`);
       const data = await response.json();
       if (data.success) {
         setPasswords(data.data);
@@ -174,7 +174,7 @@ const PasswordManager = () => {
     try {
       if (editingId !== null) {
         // Update existing password
-        const response = await fetch(`http://localhost:5000/api/passwords/${editingId}`, {
+        const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${editingId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -194,7 +194,7 @@ const PasswordManager = () => {
         }
       } else {
         // Create new password
-        const response = await fetch('http://localhost:5000/api/passwords', {
+        const response = await fetch('https://passwordmanager-mtph.onrender.com/api/passwords', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
