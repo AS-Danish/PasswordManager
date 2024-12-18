@@ -11,8 +11,14 @@ dotenv.config();
 const app = express();
 
 app.use(cors({
-  origin: ['https://passwordmanager-mtph.onrender.com', 'https://secpm.netlify.app/dashboard'],
-  credentials: true
+  origin: [
+    'http://localhost:5173',
+    'https://passwordmanager-mtph.onrender.com',
+    'https://secpm.netlify.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Define webhook route first (with the changes above)

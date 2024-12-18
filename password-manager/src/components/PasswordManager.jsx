@@ -127,7 +127,9 @@ const PasswordManager = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           clerkId: user.id
         })
@@ -159,7 +161,13 @@ const PasswordManager = () => {
 
   const fetchPasswords = async () => {
     try {
-      const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${user.id}`);
+      const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${user.id}`, {
+        headers: {
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+      });
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -201,7 +209,9 @@ const PasswordManager = () => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          credentials: 'include',
           body: JSON.stringify({
             clerkId: user.id,
             email: formData.email,
@@ -210,15 +220,22 @@ const PasswordManager = () => {
             siteUrl: formData.siteLink
           }),
         });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to save password');
+        }
+
         const data = await response.json();
         if (data.success) {
           fetchPasswords(); // Refresh the passwords list
+          setFormData({ email: '', username: '', password: '', siteLink: '' });
         }
       }
       // Reset form
       setFormData({ email: '', username: '', password: '', siteLink: '' });
     } catch (error) {
       console.error('Error saving password:', error);
+      alert(error.message || 'Failed to save password');
     }
   };
 
