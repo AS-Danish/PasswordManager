@@ -20,14 +20,8 @@ const passwordSchema = new mongoose.Schema({
     required: true
   },
   password: {
-    encryptedData: {
-      type: String,
-      required: true
-    },
-    iv: {
-      type: String,
-      required: true
-    }
+    type: String,
+    required: true
   },
   createdAt: {
     type: Date,
