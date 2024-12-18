@@ -5,6 +5,8 @@ import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
 import  User  from './models/User.model.js';
 import { Password } from './models/Password.model.js';
+import { encrypt, decrypt } from './utils/encryption.js';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -154,10 +156,39 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add JWT secret to environment variables
+const JWT_SECRET = process.env.JWT_SECRET;
+
+// Middleware to verify JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'No token provided'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Invalid token'
+    });
+  }
+};
+
 // Add password endpoint
-app.post('/api/passwords', async (req, res) => {
+app.post('/api/passwords', verifyToken, async (req, res) => {
   try {
     const { clerkId, Username, siteUrl, email, password } = req.body;
+
+    // Encrypt the password
+    const encryptedPassword = encrypt(password);
 
     // Verify if user exists
     const user = await User.findOne({ clerkId });
@@ -174,7 +205,10 @@ app.post('/api/passwords', async (req, res) => {
       Username,
       siteUrl,
       email,
-      password
+      password: {
+        encryptedData: encryptedPassword.encryptedData,
+        iv: encryptedPassword.iv
+      }
     });
 
     await newPassword.save();
@@ -182,7 +216,10 @@ app.post('/api/passwords', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Password saved successfully',
-      data: newPassword
+      data: {
+        ...newPassword._doc,
+        password: password // Send back decrypted password
+      }
     });
 
   } catch (error) {
@@ -196,15 +233,21 @@ app.post('/api/passwords', async (req, res) => {
 });
 
 // Get passwords for a specific user
-app.get('/api/passwords/:clerkId', async (req, res) => {
+app.get('/api/passwords/:clerkId', verifyToken, async (req, res) => {
   try {
     const { clerkId } = req.params;
 
     const passwords = await Password.find({ userId: clerkId });
 
+    // Decrypt passwords before sending
+    const decryptedPasswords = passwords.map(pass => ({
+      ...pass._doc,
+      password: decrypt(pass.password.encryptedData, pass.password.iv)
+    }));
+
     res.status(200).json({
       success: true,
-      data: passwords
+      data: decryptedPasswords
     });
 
   } catch (error) {
@@ -257,7 +300,7 @@ app.delete('/api/passwords/:id', async (req, res) => {
 });
 
 // Update a password
-app.put('/api/passwords/:id', async (req, res) => {
+app.put('/api/passwords/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { clerkId, Username, siteUrl, email, password } = req.body;
@@ -270,13 +313,19 @@ app.put('/api/passwords/:id', async (req, res) => {
       });
     }
 
+    // Encrypt the new password
+    const encryptedPassword = encrypt(password);
+
     const updatedPassword = await Password.findByIdAndUpdate(
       id,
       {
         Username,
         siteUrl,
         email,
-        password,
+        password: {
+          encryptedData: encryptedPassword.encryptedData,
+          iv: encryptedPassword.iv
+        },
         updatedAt: new Date()
       },
       { new: true }
@@ -285,7 +334,10 @@ app.put('/api/passwords/:id', async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Password updated successfully',
-      data: updatedPassword
+      data: {
+        ...updatedPassword._doc,
+        password: password // Send back decrypted password
+      }
     });
 
   } catch (error) {
