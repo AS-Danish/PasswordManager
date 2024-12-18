@@ -123,6 +123,12 @@ const PasswordManager = () => {
     passwordId: null
   });
 
+  const getAuthHeaders = () => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${user.sessionId}`,
+    'Accept': 'application/json'
+  });
+
   const handleEdit = (password) => {
     setFormData({
       email: password.email,
@@ -137,10 +143,7 @@ const PasswordManager = () => {
     try {
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
         body: JSON.stringify({
           clerkId: user.id
@@ -206,9 +209,7 @@ const PasswordManager = () => {
   const fetchPasswords = async () => {
     try {
       const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${user.id}`, {
-        headers: {
-          'Accept': 'application/json',
-        },
+        headers: getAuthHeaders(),
         credentials: 'include',
       });
 
@@ -231,9 +232,7 @@ const PasswordManager = () => {
         // Update existing password
         const response = await fetch(`https://passwordmanager-mtph.onrender.com/api/passwords/${editingId}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             clerkId: user.id,
             email: formData.email,
@@ -258,10 +257,7 @@ const PasswordManager = () => {
         // Create new password
         const response = await fetch('https://passwordmanager-mtph.onrender.com/api/passwords', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
+          headers: getAuthHeaders(),
           credentials: 'include',
           body: JSON.stringify({
             clerkId: user.id,
