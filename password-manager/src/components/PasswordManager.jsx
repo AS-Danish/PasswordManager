@@ -160,7 +160,6 @@ const PasswordManager = () => {
           autoClose: 3000,
           hideProgressBar: false,
           closeOnClick: true,
-          pauseOnHover: true,
           draggable: true,
         });
       }
@@ -171,7 +170,6 @@ const PasswordManager = () => {
         autoClose: 3000,
         hideProgressBar: false,
         closeOnClick: true,
-        pauseOnHover: true,
         draggable: true,
       });
     } finally {
@@ -186,7 +184,13 @@ const PasswordManager = () => {
   const handleCopy = async (text) => {
     try {
       await navigator.clipboard.writeText(text)
-      // You could add a toast notification here
+      toast.success('Password Copied successfully', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        draggable: true,
+      });
     } catch (err) {
       console.error('Failed to copy text: ', err)
     }
@@ -246,7 +250,6 @@ const PasswordManager = () => {
             autoClose: 3000,
             hideProgressBar: false,
             closeOnClick: true,
-            pauseOnHover: true,
             draggable: true,
           });
           setEditingId(null);
@@ -282,7 +285,6 @@ const PasswordManager = () => {
             autoClose: 3000,
             hideProgressBar: false,
             closeOnClick: true,
-            pauseOnHover: true,
             draggable: true,
           });
         }

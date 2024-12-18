@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const PasswordGenerator = ({ isOpen, onClose, onSelectPassword }) => {
@@ -11,6 +11,17 @@ const PasswordGenerator = ({ isOpen, onClose, onSelectPassword }) => {
     excludeSimilar: false,
   })
   const [generatedPassword, setGeneratedPassword] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) {
+      setGeneratedPassword('');
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setGeneratedPassword('');
+    onClose();
+  };
 
   const generatePassword = () => {
     let charset = ''
@@ -97,7 +108,7 @@ const PasswordGenerator = ({ isOpen, onClose, onSelectPassword }) => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">Password Generator</h2>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,8 +230,9 @@ const PasswordGenerator = ({ isOpen, onClose, onSelectPassword }) => {
                 <button
                   onClick={() => {
                     if (generatedPassword) {
-                      onSelectPassword(generatedPassword)
-                      onClose()
+                      onSelectPassword(generatedPassword);
+                      setGeneratedPassword('');
+                      onClose();
                     }
                   }}
                   disabled={!generatedPassword}
