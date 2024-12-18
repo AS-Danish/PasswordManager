@@ -10,7 +10,10 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://passwordmanager-mtph.onrender.com'],
+  credentials: true
+}));
 
 // Define webhook route first (with the changes above)
 app.post('/webhook/clerk', express.raw({type: 'application/json', limit: '5mb'}), async (req, res) => {
@@ -153,9 +156,12 @@ app.post('/api/passwords', async (req, res) => {
   try {
     const { clerkId, Username, siteUrl, email, password } = req.body;
 
+    console.log('Received password data:', { clerkId, email, siteUrl });
+
     // Verify if user exists
     const user = await User.findOne({ clerkId });
     if (!user) {
+      console.log('User not found:', clerkId); // Debug log
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -172,6 +178,7 @@ app.post('/api/passwords', async (req, res) => {
     });
 
     await newPassword.save();
+    console.log('Password saved successfully'); // Debug log
 
     res.status(201).json({
       success: true,
@@ -193,8 +200,10 @@ app.post('/api/passwords', async (req, res) => {
 app.get('/api/passwords/:clerkId', async (req, res) => {
   try {
     const { clerkId } = req.params;
+    console.log('Fetching passwords for user:', clerkId); // Debug log
 
     const passwords = await Password.find({ userId: clerkId });
+    console.log('Found passwords:', passwords.length); // Debug log
 
     res.status(200).json({
       success: true,
