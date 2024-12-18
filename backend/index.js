@@ -4,6 +4,7 @@ import cors from 'cors';
 import { dbConnection } from './dbConnection/dbConnection.js';
 import { Webhook } from 'svix';
 import  User  from './models/User.model.js';
+import { Password } from './models/Password.model.js';
 
 dotenv.config();
 
@@ -146,6 +147,143 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Add password endpoint
+app.post('/api/passwords', async (req, res) => {
+  try {
+    const { clerkId, Username, siteUrl, email, password } = req.body;
+
+    // Verify if user exists
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Create new password entry
+    const newPassword = new Password({
+      userId: clerkId,
+      Username,
+      siteUrl,
+      email,
+      password
+    });
+
+    await newPassword.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Password saved successfully',
+      data: newPassword
+    });
+
+  } catch (error) {
+    console.error('Error saving password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error saving password',
+      error: error.message
+    });
+  }
+});
+
+// Get passwords for a specific user
+app.get('/api/passwords/:clerkId', async (req, res) => {
+  try {
+    const { clerkId } = req.params;
+
+    const passwords = await Password.find({ userId: clerkId });
+
+    res.status(200).json({
+      success: true,
+      data: passwords
+    });
+
+  } catch (error) {
+    console.error('Error fetching passwords:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching passwords',
+      error: error.message
+    });
+  }
+});
+
+// Delete a password
+app.delete('/api/passwords/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clerkId } = req.body; // For verification
+
+    const password = await Password.findOne({ _id: id, userId: clerkId });
+    if (!password) {
+      return res.status(404).json({
+        success: false,
+        message: 'Password not found or unauthorized'
+      });
+    }
+
+    await Password.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting password',
+      error: error.message
+    });
+  }
+});
+
+// Update a password
+app.put('/api/passwords/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { clerkId, Username, siteUrl, email, password } = req.body;
+
+    const existingPassword = await Password.findOne({ _id: id, userId: clerkId });
+    if (!existingPassword) {
+      return res.status(404).json({
+        success: false,
+        message: 'Password not found or unauthorized'
+      });
+    }
+
+    const updatedPassword = await Password.findByIdAndUpdate(
+      id,
+      {
+        Username,
+        siteUrl,
+        email,
+        password,
+        updatedAt: new Date()
+      },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Password updated successfully',
+      data: updatedPassword
+    });
+
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating password',
+      error: error.message
+    });
+  }
+});
+
 
 // Start server
 app.listen(process.env.PORT, async () => {

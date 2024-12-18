@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useUser, UserButton } from '@clerk/clerk-react'
 import PasswordGenerator from './PasswordGenerator'
@@ -81,14 +81,15 @@ const DashboardFooter = () => {
 }
 
 const PasswordManager = () => {
-  const [passwords, setPasswords] = useState([])
+  const { user } = useUser();
+  const [passwords, setPasswords] = useState([]);
   const [formData, setFormData] = useState({
     email: '',
     username: '',
     password: '',
     siteLink: ''
-  })
-  
+  });
+
   const [showPassword, setShowPassword] = useState({
     current: false,
     saved: {}
@@ -97,7 +98,7 @@ const PasswordManager = () => {
 
   const [isPasswordGeneratorOpen, setIsPasswordGeneratorOpen] = useState(false)
 
-  const handleSubmit = (e) => {
+  /* const handleSubmit = (e) => {
     e.preventDefault()
     if (editingId !== null) {
       setPasswords(passwords.map(pass =>
@@ -108,15 +109,36 @@ const PasswordManager = () => {
       setPasswords([...passwords, { ...formData, id: Date.now() }])
     }
     setFormData({ email: '', username: '', password: '', siteLink: '' })
-  }
+  }*/
 
   const handleEdit = (password) => {
-    setFormData(password)
-    setEditingId(password.id)
-  }
+    setFormData({
+      email: password.email,
+      username: password.username || '',
+      password: password.password,
+      siteLink: password.siteUrl
+    });
+    setEditingId(password._id); // Use _id from MongoDB
+  };
 
-  const handleDelete = (id) => {
-    setPasswords(passwords.filter(pass => pass.id !== id))
+  const handleDelete = async(id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/passwords/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          clerkId: user.id
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchPasswords(); // Refresh the passwords list
+      }
+    } catch (error) {
+      console.error('Error deleting password:', error);
+    }
   }
 
   const handleCopy = async (text) => {
@@ -127,6 +149,75 @@ const PasswordManager = () => {
       console.error('Failed to copy text: ', err)
     }
   }
+
+  // Fetch passwords when component mounts
+  useEffect(() => {
+    if (user?.id) {
+      fetchPasswords();
+    }
+  }, [user]);
+
+  const fetchPasswords = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/passwords/${user.id}`);
+      const data = await response.json();
+      if (data.success) {
+        setPasswords(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching passwords:', error);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingId !== null) {
+        // Update existing password
+        const response = await fetch(`http://localhost:5000/api/passwords/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            clerkId: user.id,
+            email: formData.email,
+            username: formData.username,
+            password: formData.password,
+            siteUrl: formData.siteLink
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          fetchPasswords(); // Refresh the passwords list
+          setEditingId(null);
+        }
+      } else {
+        // Create new password
+        const response = await fetch('http://localhost:5000/api/passwords', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            clerkId: user.id,
+            email: formData.email,
+            username: formData.username,
+            password: formData.password,
+            siteUrl: formData.siteLink
+          }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          fetchPasswords(); // Refresh the passwords list
+        }
+      }
+      // Reset form
+      setFormData({ email: '', username: '', password: '', siteLink: '' });
+    } catch (error) {
+      console.error('Error saving password:', error);
+    }
+  };
 
   const getFaviconUrl = (url) => {
     try {
@@ -266,21 +357,21 @@ const PasswordManager = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {passwords.map((password) => (
-                    <tr key={password.id} className="hover:bg-gray-50">
+                    <tr key={password._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <img
                             className="h-8 w-8 rounded-full"
-                            src={getFaviconUrl(password.siteLink)}
+                            src={getFaviconUrl(password.siteUrl)}
                             alt=""
                           />
                           <a
-                            href={password.siteLink}
+                            href={password.siteUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="ml-3 text-sm text-indigo-600 hover:text-indigo-900"
                           >
-                            {new URL(password.siteLink).hostname}
+                            {new URL(password.siteUrl).hostname}
                           </a>
                         </div>
                       </td>
@@ -291,7 +382,7 @@ const PasswordManager = () => {
                         {password.username || '-'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {showPassword[password.id] ? password.password : '••••••••'}
+                        {showPassword[password.Iid] ? password.password : '••••••••'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                         <motion.button
@@ -299,11 +390,11 @@ const PasswordManager = () => {
                           whileTap={{ scale: 0.9 }}
                           onClick={() => setShowPassword({
                             ...showPassword,
-                            [password.id]: !showPassword[password.id]
+                            [password.Iid]: !showPassword[password.Iid]
                           })}
                           className="text-indigo-600 hover:text-indigo-900"
                         >
-                          {showPassword[password.id] ? 'Hide' : 'View'}
+                          {showPassword[password.Iid] ? 'Hide' : 'View'}
                         </motion.button>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -324,7 +415,7 @@ const PasswordManager = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleDelete(password.id)}
+                          onClick={() => handleDelete(password.Iid)}
                           className="text-red-600 hover:text-red-900"
                         >
                           Delete
