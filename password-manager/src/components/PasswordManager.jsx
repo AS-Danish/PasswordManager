@@ -158,17 +158,6 @@ const FilterSection = ({ filters, setFilters }) => {
   )
 }
 
-// Add filtered passwords logic using useMemo
-const filteredPasswords = useMemo(() => {
-  return passwords.filter(password => {
-    const siteMatch = password.siteUrl.toLowerCase().includes(filters.site.toLowerCase())
-    const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase())
-    const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false
-    
-    return siteMatch && emailMatch && usernameMatch
-  })
-}, [passwords, filters])
-
 const PasswordManager = () => {
   const { user } = useUser();
   const [passwords, setPasswords] = useState([]);
@@ -178,6 +167,24 @@ const PasswordManager = () => {
     password: '',
     siteLink: ''
   });
+  
+  // Add filters state
+  const [filters, setFilters] = useState({
+    site: '',
+    email: '',
+    username: ''
+  });
+
+  // Move filteredPasswords inside the component
+  const filteredPasswords = useMemo(() => {
+    return passwords.filter(password => {
+      const siteMatch = password.siteUrl.toLowerCase().includes(filters.site.toLowerCase())
+      const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase())
+      const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false
+      
+      return siteMatch && emailMatch && usernameMatch
+    })
+  }, [passwords, filters])
 
   const [showPassword, setShowPassword] = useState({
     current: false,
