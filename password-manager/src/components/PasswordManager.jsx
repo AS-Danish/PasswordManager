@@ -100,6 +100,75 @@ const DashboardFooter = () => {
   )
 }
 
+// Add this new component for the filter section
+const FilterSection = ({ filters, setFilters }) => {
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-md mb-8">
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Filter Passwords</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search Site
+          </label>
+          <input
+            type="text"
+            value={filters.site}
+            onChange={(e) => setFilters({ ...filters, site: e.target.value })}
+            placeholder="Search by site name"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search Email
+          </label>
+          <input
+            type="text"
+            value={filters.email}
+            onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+            placeholder="Search by email"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search Username
+          </label>
+          <input
+            type="text"
+            value={filters.username}
+            onChange={(e) => setFilters({ ...filters, username: e.target.value })}
+            placeholder="Search by username"
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex justify-end">
+        <button
+          onClick={() => setFilters({ site: '', email: '', username: '' })}
+          className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+        >
+          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Clear Filters
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Add filtered passwords logic using useMemo
+const filteredPasswords = useMemo(() => {
+  return passwords.filter(password => {
+    const siteMatch = password.siteUrl.toLowerCase().includes(filters.site.toLowerCase())
+    const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase())
+    const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false
+    
+    return siteMatch && emailMatch && usernameMatch
+  })
+}, [passwords, filters])
+
 const PasswordManager = () => {
   const { user } = useUser();
   const [passwords, setPasswords] = useState([]);
@@ -332,7 +401,11 @@ const PasswordManager = () => {
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <DashboardStats passwords={passwords} />
+          {/* Add the FilterSection component */}
+          <FilterSection filters={filters} setFilters={setFilters} />
+          
+          {/* Update DashboardStats to show filtered count */}
+          <DashboardStats passwords={filteredPasswords} />
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -454,7 +527,7 @@ const PasswordManager = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {passwords.map((password) => (
+                  {filteredPasswords.map((password) => (
                     <tr key={password._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -527,7 +600,7 @@ const PasswordManager = () => {
                 </tbody>
               </table>
 
-              {passwords.length === 0 && (
+              {filteredPasswords.length === 0 && (
                 <div className="text-center py-12">
                   <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
