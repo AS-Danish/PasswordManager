@@ -100,60 +100,64 @@ const DashboardFooter = () => {
   )
 }
 
-// Add this new component for the filter section
-const FilterSection = ({ filters, setFilters }) => {
+// Add this new component for the enhanced filter section
+const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType }) => {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md mb-8">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Filter Passwords</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search Site
-          </label>
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex items-end space-x-4">
+      <div className="flex-shrink-0 w-48">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Filter By
+        </label>
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value)}
+          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        >
+          <option value="site">Website</option>
+          <option value="email">Email</option>
+          <option value="username">Username</option>
+        </select>
+      </div>
+      
+      <div className="flex-grow">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Search {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+        </label>
+        <div className="relative">
           <input
             type="text"
-            value={filters.site}
-            onChange={(e) => setFilters({ ...filters, site: e.target.value })}
-            placeholder="Search by site name"
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            value={filters[filterType]}
+            onChange={(e) => setFilters({ ...filters, [filterType]: e.target.value })}
+            placeholder={`Search by ${filterType}...`}
+            className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search Email
-          </label>
-          <input
-            type="text"
-            value={filters.email}
-            onChange={(e) => setFilters({ ...filters, email: e.target.value })}
-            placeholder="Search by email"
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Search Username
-          </label>
-          <input
-            type="text"
-            value={filters.username}
-            onChange={(e) => setFilters({ ...filters, username: e.target.value })}
-            placeholder="Search by username"
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
+          {filters[filterType] && (
+            <button
+              onClick={() => setFilters({ ...filters, [filterType]: '' })}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
-      <div className="mt-4 flex justify-end">
+      
+      {Object.values(filters).some(value => value) && (
         <button
-          onClick={() => setFilters({ site: '', email: '', username: '' })}
-          className="text-sm text-gray-500 hover:text-gray-700 flex items-center"
+          onClick={() => {
+            setFilters({ site: '', email: '', username: '' })
+            setFilterType('site')
+          }}
+          className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
         >
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
-          Clear Filters
+          Clear All
         </button>
-      </div>
+      )}
     </div>
   )
 }
@@ -198,6 +202,8 @@ const PasswordManager = () => {
     isOpen: false,
     passwordId: null
   });
+
+  const [filterType, setFilterType] = useState('site')
 
   const handleEdit = (password) => {
     setFormData({
@@ -408,12 +414,8 @@ const PasswordManager = () => {
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Add the FilterSection component */}
-          <FilterSection filters={filters} setFilters={setFilters} />
-          
-          {/* Update DashboardStats to show filtered count */}
           <DashboardStats passwords={filteredPasswords} />
-
+          
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -520,6 +522,14 @@ const PasswordManager = () => {
                 </motion.button>
               </div>
             </form>
+
+            {/* Add Enhanced Filter Section above the table */}
+            <EnhancedFilterSection 
+              filters={filters}
+              setFilters={setFilters}
+              filterType={filterType}
+              setFilterType={setFilterType}
+            />
 
             {/* Table */}
             <div className="overflow-x-auto">
