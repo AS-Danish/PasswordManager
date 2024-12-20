@@ -101,62 +101,121 @@ const DashboardFooter = () => {
 }
 
 // Add this new component for the enhanced filter section
-const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType }) => {
+const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType, strengthFilter, setStrengthFilter }) => {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex items-end space-x-4">
-      <div className="flex-shrink-0 w-48">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Filter By
-        </label>
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        >
-          <option value="site">Website</option>
-          <option value="email">Email</option>
-          <option value="username">Username</option>
-        </select>
-      </div>
-      
-      <div className="flex-grow">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Search {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={filters[filterType]}
-            onChange={(e) => setFilters({ ...filters, [filterType]: e.target.value })}
-            placeholder={`Search by ${filterType}...`}
-            className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          {filters[filterType] && (
-            <button
-              onClick={() => setFilters({ ...filters, [filterType]: '' })}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
+      <div className="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
+        <div className="flex-shrink-0 w-48">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Filter By
+          </label>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="site">Website</option>
+            <option value="email">Email</option>
+            <option value="username">Username</option>
+          </select>
+        </div>
+        
+        <div className="flex-grow">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Search {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={filters[filterType]}
+              onChange={(e) => setFilters({ ...filters, [filterType]: e.target.value })}
+              placeholder={`Search by ${filterType}...`}
+              className="w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            {filters[filterType] && (
+              <button
+                onClick={() => setFilters({ ...filters, [filterType]: '' })}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
-      
-      {Object.values(filters).some(value => value) && (
-        <button
-          onClick={() => {
-            setFilters({ site: '', email: '', username: '' })
-            setFilterType('site')
-          }}
-          className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
-        >
-          <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Clear All
-        </button>
+
+      {/* Add Password Strength Filter */}
+      <div className="mt-4 border-t pt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Filter by Password Strength
+        </label>
+        <div className="flex flex-wrap gap-4">
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="strength"
+              value="all"
+              checked={strengthFilter === 'all'}
+              onChange={(e) => setStrengthFilter(e.target.value)}
+              className="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">All</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="strength"
+              value="strong"
+              checked={strengthFilter === 'strong'}
+              onChange={(e) => setStrengthFilter(e.target.value)}
+              className="form-radio h-4 w-4 text-green-600 focus:ring-green-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">Strong</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="strength"
+              value="medium"
+              checked={strengthFilter === 'medium'}
+              onChange={(e) => setStrengthFilter(e.target.value)}
+              className="form-radio h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">Medium</span>
+          </label>
+          <label className="inline-flex items-center">
+            <input
+              type="radio"
+              name="strength"
+              value="weak"
+              checked={strengthFilter === 'weak'}
+              onChange={(e) => setStrengthFilter(e.target.value)}
+              className="form-radio h-4 w-4 text-red-600 focus:ring-red-500"
+            />
+            <span className="ml-2 text-sm text-gray-700">Weak</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Clear Filters Button */}
+      {(Object.values(filters).some(value => value) || strengthFilter !== 'all') && (
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={() => {
+              setFilters({ site: '', email: '', username: '' })
+              setFilterType('site')
+              setStrengthFilter('all')
+            }}
+            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Clear All Filters
+          </button>
+        </div>
       )}
     </div>
   )
@@ -186,9 +245,13 @@ const PasswordManager = () => {
       const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase())
       const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false
       
-      return siteMatch && emailMatch && usernameMatch
+      // Add strength filtering
+      const strength = checkPasswordStrength(password.password)
+      const strengthMatch = strengthFilter === 'all' || strength === strengthFilter
+
+      return siteMatch && emailMatch && usernameMatch && strengthMatch
     })
-  }, [passwords, filters])
+  }, [passwords, filters, strengthFilter])
 
   const [showPassword, setShowPassword] = useState({
     current: false,
@@ -204,6 +267,7 @@ const PasswordManager = () => {
   });
 
   const [filterType, setFilterType] = useState('site')
+  const [strengthFilter, setStrengthFilter] = useState('all')
 
   const handleEdit = (password) => {
     setFormData({
