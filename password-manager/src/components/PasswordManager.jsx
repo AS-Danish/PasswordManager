@@ -223,6 +223,8 @@ const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType,
 
 const PasswordManager = () => {
   const { user } = useUser();
+  
+  // Group all state declarations together at the top
   const [passwords, setPasswords] = useState([]);
   const [formData, setFormData] = useState({
     email: '',
@@ -230,44 +232,38 @@ const PasswordManager = () => {
     password: '',
     siteLink: ''
   });
-  
-  // Add filters state
   const [filters, setFilters] = useState({
     site: '',
     email: '',
     username: ''
   });
-
-  // Move filteredPasswords inside the component
-  const filteredPasswords = useMemo(() => {
-    return passwords.filter(password => {
-      const siteMatch = password.siteUrl.toLowerCase().includes(filters.site.toLowerCase())
-      const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase())
-      const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false
-      
-      // Add strength filtering
-      const strength = checkPasswordStrength(password.password)
-      const strengthMatch = strengthFilter === 'all' || strength === strengthFilter
-
-      return siteMatch && emailMatch && usernameMatch && strengthMatch
-    })
-  }, [passwords, filters, strengthFilter])
-
+  const [filterType, setFilterType] = useState('site');
+  const [strengthFilter, setStrengthFilter] = useState('all');
   const [showPassword, setShowPassword] = useState({
     current: false,
     saved: {}
-  })
-  const [editingId, setEditingId] = useState(null)
-
-  const [isPasswordGeneratorOpen, setIsPasswordGeneratorOpen] = useState(false)
-
+  });
+  const [editingId, setEditingId] = useState(null);
+  const [isPasswordGeneratorOpen, setIsPasswordGeneratorOpen] = useState(false);
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
     passwordId: null
   });
 
-  const [filterType, setFilterType] = useState('site')
-  const [strengthFilter, setStrengthFilter] = useState('all')
+  // Now define filteredPasswords after all state declarations
+  const filteredPasswords = useMemo(() => {
+    return passwords.filter(password => {
+      const siteMatch = password.siteUrl.toLowerCase().includes(filters.site.toLowerCase());
+      const emailMatch = password.email.toLowerCase().includes(filters.email.toLowerCase());
+      const usernameMatch = password.Username?.toLowerCase().includes(filters.username.toLowerCase()) || false;
+      
+      // Add strength filtering
+      const strength = checkPasswordStrength(password.password);
+      const strengthMatch = strengthFilter === 'all' || strength === strengthFilter;
+
+      return siteMatch && emailMatch && usernameMatch && strengthMatch;
+    });
+  }, [passwords, filters, strengthFilter]);
 
   const handleEdit = (password) => {
     setFormData({
@@ -593,6 +589,8 @@ const PasswordManager = () => {
               setFilters={setFilters}
               filterType={filterType}
               setFilterType={setFilterType}
+              strengthFilter={strengthFilter}
+              setStrengthFilter={setStrengthFilter}
             />
 
             {/* Table */}
