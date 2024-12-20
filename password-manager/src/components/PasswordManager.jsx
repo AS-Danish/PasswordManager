@@ -100,11 +100,12 @@ const DashboardFooter = () => {
   )
 }
 
-// Add this new component for the enhanced filter section
+// Update the EnhancedFilterSection component
 const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType, strengthFilter, setStrengthFilter }) => {
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-      <div className="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
+      {/* Search Filters */}
+      <div className="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4 mb-4">
         <div className="flex-shrink-0 w-48">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Filter By
@@ -146,77 +147,77 @@ const EnhancedFilterSection = ({ filters, setFilters, filterType, setFilterType,
         </div>
       </div>
 
-      {/* Add Password Strength Filter */}
-      <div className="mt-4 border-t pt-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Filter by Password Strength
-        </label>
-        <div className="flex flex-wrap gap-4">
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              name="strength"
-              value="all"
-              checked={strengthFilter === 'all'}
-              onChange={(e) => setStrengthFilter(e.target.value)}
-              className="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">All</span>
+      {/* Password Strength Filter and Clear All in one row */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between border-t pt-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+            Password Strength:
           </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              name="strength"
-              value="strong"
-              checked={strengthFilter === 'strong'}
-              onChange={(e) => setStrengthFilter(e.target.value)}
-              className="form-radio h-4 w-4 text-green-600 focus:ring-green-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Strong</span>
-          </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              name="strength"
-              value="medium"
-              checked={strengthFilter === 'medium'}
-              onChange={(e) => setStrengthFilter(e.target.value)}
-              className="form-radio h-4 w-4 text-yellow-600 focus:ring-yellow-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Medium</span>
-          </label>
-          <label className="inline-flex items-center">
-            <input
-              type="radio"
-              name="strength"
-              value="weak"
-              checked={strengthFilter === 'weak'}
-              onChange={(e) => setStrengthFilter(e.target.value)}
-              className="form-radio h-4 w-4 text-red-600 focus:ring-red-500"
-            />
-            <span className="ml-2 text-sm text-gray-700">Weak</span>
-          </label>
+          <div className="flex flex-wrap gap-4">
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="strength"
+                value="all"
+                checked={strengthFilter === 'all'}
+                onChange={(e) => setStrengthFilter(e.target.value)}
+                className="form-radio h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">All</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="strength"
+                value="strong"
+                checked={strengthFilter === 'strong'}
+                onChange={(e) => setStrengthFilter(e.target.value)}
+                className="form-radio h-4 w-4 text-green-600 focus:ring-green-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Strong</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="strength"
+                value="medium"
+                checked={strengthFilter === 'medium'}
+                onChange={(e) => setStrengthFilter(e.target.value)}
+                className="form-radio h-4 w-4 text-yellow-600 focus:ring-yellow-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Medium</span>
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                name="strength"
+                value="weak"
+                checked={strengthFilter === 'weak'}
+                onChange={(e) => setStrengthFilter(e.target.value)}
+                className="form-radio h-4 w-4 text-red-600 focus:ring-red-500"
+              />
+              <span className="ml-2 text-sm text-gray-700">Weak</span>
+            </label>
+          </div>
         </div>
-      </div>
 
-      {/* Clear Filters Button */}
-      {(Object.values(filters).some(value => value) || strengthFilter !== 'all') && (
-        <div className="mt-4 flex justify-end">
+        {/* Clear All Button */}
+        {(Object.values(filters).some(value => value) || strengthFilter !== 'all') && (
           <button
             onClick={() => {
               setFilters({ site: '', email: '', username: '' })
               setFilterType('site')
               setStrengthFilter('all')
             }}
-            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
+            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 mt-4 md:mt-0"
           >
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
             Clear All Filters
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
