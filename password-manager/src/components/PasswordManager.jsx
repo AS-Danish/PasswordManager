@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useUser, UserButton } from '@clerk/clerk-react'
 import PasswordGenerator from './PasswordGenerator'
